@@ -387,13 +387,14 @@ int main(int argc, char * argv[]) {
 
 
 	      //Inizio della simulazione vera e propria
-	      const int nEvents = 1;
+	      const int nEvents = 50;
 	      const bool debug = true;
+	      const double momentum = 1.e9;
 	      // Track class
 	      TrackHeed* track = new TrackHeed();
 	      track->SetSensor(sensor);
 	      track->SetParticle("mu");
-	      track->SetMomentum(1.e9);
+	      track->SetMomentum(momentum);
 	      track->DisableDeltaElectronTransport();
 
 	      for (int i = nEvents; i--;) {
@@ -494,7 +495,7 @@ int main(int argc, char * argv[]) {
 	      double fFeedback = 0.;
 	      if (sumIonsTotal > 0.) fFeedback = sumIonsDrift / sumIonsTotal;
 	      std::cout << "Fraction of ions drifting back: " << fFeedback << "\n";
-	      fprintf(ptr, "Fraction of ions drifting back: %.2f %c\n",fFeedback,'%');
+	      fprintf(ptr, "Fraction of ions drifting back: %.2f %c\n",fFeedback*100,'%');
 
 	      //Stampo il numero medio di ioni e elettroni prodotto per primario
 	      const double neMean = hElectrons->GetMean();
@@ -661,15 +662,17 @@ int main(int argc, char * argv[]) {
 	      
 	      fclose(ptr);
 
-	      memset(newname, 0, sizeof(newname));
-	      if(!getcwd(newname,sizeof(newname)))
+	      memset(holdname, 0, sizeof(holdname));
+	      if(!getcwd(holdname,sizeof(holdname)))
 		{
 		  std::cout<<"Error while reading working director. Script will end right now\n";
 		  return 0; 		  
 		}
-	      strcat (newname, "/");
-	      strcat (newname, entry->d_name);
-	      strcat (newname, "/Front 20 mu 1 GeV.pdf");
+	      strcat (holdname, "/");
+	      strcat (holdname, entry->d_name);
+	      strcat (holdname, "/Front ");
+	      sprintf(newname,"%d mu %.0f GeV.pdf",nEvents, momentum/1000000000);
+	      strcat(holdname, newname);
 
 
 	      //PLOT MESH UTILE, BIDIMENSIONALE
@@ -683,19 +686,22 @@ int main(int argc, char * argv[]) {
 	      meshView->SetViewDrift(driftView);
 	      meshView->SetArea(-0.02, -0.02, -0.07, 0.02, 0.02, 0.07);
 	      meshView->Plot();
-	      c87->SaveAs(newname);
+	      c87->SaveAs(holdname);
 	      c87->Clear();
 	      c87->Close();
 
-	      memset(newname, 0, sizeof(newname));
-	      if(!getcwd(newname,sizeof(newname)))
+	      memset(holdname, 0, sizeof(holdname));
+	      if(!getcwd(holdname,sizeof(holdname)))
 		{
 		  std::cout<<"Error while reading working director. Script will end right now\n";
 		  return 0;
 		}
-	      strcat (newname, "/");
-	      strcat (newname, entry->d_name);
-	      strcat (newname, "/Top 20 mu 1 GeV.pdf");
+	      strcat (holdname, "/");
+	      strcat (holdname, entry->d_name);
+	      strcat (holdname, "/Top ");
+	      sprintf(newname,"%d mu %.0f GeV.pdf",nEvents, momentum/1000000000.);
+	      strcat(holdname, newname);
+	      
 
 	      TCanvas* c88 = new TCanvas("c88","mesh2",800,600);
 	      ViewFEMesh* meshView2 = new ViewFEMesh();
@@ -707,7 +713,7 @@ int main(int argc, char * argv[]) {
 	      meshView2->SetViewDrift(driftView);
 	      meshView2->SetArea(-0.02, -0.02, -0.07, 0.02, 0.02, 0.07);
 	      meshView2->Plot();
-	      c88->SaveAs(newname);
+	      c88->SaveAs(holdname);
 	      c88->Clear();
 	      c88->Close();
 

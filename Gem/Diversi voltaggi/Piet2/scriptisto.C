@@ -40,13 +40,13 @@ using namespace Garfield;
 int main(int argc, char * argv[]) {
 
   TApplication app("app", &argc, argv);
-  plottingEngine.SetDefaultStyle();
+  //  plottingEngine.SetDefaultStyle();
   
-  TH1F* totalelectrons = new TH1F("totalelectrons","",35,0,3500);
-  TH1F* lostelectrons =  new TH1F("lostelectrons","",35,0,3500);
-  TH1F* fractionup =  new TH1F("fractionup","",35,0,3500);
-  TH1F* fractionplastic  =  new TH1F("fractionplastic","",35,0,3500);
-  TH1F* fractionlow =  new TH1F("fractionlow","",35,0,3500);
+  TH1F* totalelectrons = new TH1F("totalelectrons","",100,0,10000);
+  TH1F* lostelectrons =  new TH1F("lostelectrons","",100,0,10000);
+  TH1F* fractionup =  new TH1F("fractionup","",100,0,10000);
+  TH1F* fractionplastic  =  new TH1F("fractionplastic","",100,0,10000);
+  TH1F* fractionlow =  new TH1F("fractionlow","",100,0,10000);
   
 
   const bool debug = true;
@@ -221,21 +221,21 @@ int main(int argc, char * argv[]) {
     fractionplastic->Draw("SAME hist b");
        fractionup->Draw("SAME hist b");
     
-    auto legend = new TLegend(0.4,0.7,0.68,0.9);
+    auto legend = new TLegend(0.72,0.75,0.98,0.95);
     legend->SetHeader("Legend","C"); // option "C" allows to center the header
     legend->AddEntry(totalelectrons,"Produced electrons","f");
     legend->AddEntry(fractionlow,"Lost on lowmetal+plastic+upmetal","f");
-    legend->AddEntry(fractionup,"Lost on upper metal","f");
     legend->AddEntry(fractionplastic,"Lost on plastic + upmetal","f");
+    legend->AddEntry(fractionup,"Lost on upper metal","f");
     
     legend->SetFillColorAlpha(kWhite,0.5);
     legend->Draw();
     char c[200];
     char b[200];
     sprintf(c,"GEM dimension [#mum]   -   kapton = %.0f,  hole diam = %.0f-%.0f,  pitch = %.0f, dirft gap = 250",kapton*10000, middia*10000,outdia*10000,pitch*10000);
-    TLatex *text = new TLatex(50, 830, c);
-    sprintf(b,"#splitline{GEM field: %.0f kV/cm}{Transfer field: %.0f kV/cm}",(lowmetal-upmetal)/5,(induction-lowmetal)/100);   //Fattore 100 ingloba spazio di drift e conversione V->kV
-    TLatex *text2 = new TLatex(100, 700, b);
+    TLatex *text = new TLatex(50, 835, c);
+    sprintf(b,"GEM field: %.0f kV/cm Transfer field: %.0f kV/cm",(lowmetal-upmetal)/5,(induction-lowmetal)/100);   //Fattore 100 ingloba spazio di drift e conversione V->kV
+    TLatex *text2 = new TLatex(400, 780, b);
     text->SetTextSize(0.032);
     text2->SetTextSize(0.039);
     text->Draw();

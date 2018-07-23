@@ -16,11 +16,11 @@ __________________________________________________________
 -Rim			80 micron
 __________________________________________________________
 
-Elettroni totali prodotti 5	 Elettroni totali persi: 0
+Elettroni totali prodotti 760	 Elettroni totali persi: 249
 
-Fraction of ions drifting back: 1.00 %
-    upper metal: 0.00 %
-    plastic:     0.00 %
-    lower metal: 0.00 %
-    transfer:    100.00 %
+Fraction of ions drifting back: 77.09 %
+    upper metal: 0.26 %
+    plastic:     12.37 %
+    lower metal: 20.13 %
+    transfer:    67.24 %
     other:        0.00 %
