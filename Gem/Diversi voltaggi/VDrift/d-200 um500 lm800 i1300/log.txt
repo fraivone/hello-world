@@ -1,0 +1,22 @@
+Il campo elettrico è stato simulato da ANSYS in base a questi valori
+
+-Drift plane		-200 V
+-Upper metal		500 V
+-Lower metal		 800V
+-Induction plane	 1300V
+__________________________________________________________
+
+-Pitch			140 micron
+-Kapton			50 micron
+-Outdiam		70 micron
+-Middiam		50 micron
+__________________________________________________________
+
+Elettroni totali prodotti 187	 Elettroni totali persi: 104
+
+Fraction of ions drifting back: 0.00%
+    upper metal: 8.02%
+    plastic:     28.34%
+    lower metal: 17.65%
+    transfer:    44.39%
+    other:        1.60%

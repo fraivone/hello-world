@@ -1,0 +1,251 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <cmath>
+#include <TLegend.h>
+#include <TLatex.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <TApplication.h>
+#include <TCanvas.h>
+#include <sstream>
+#include <TH1F.h>
+#include <TGeoManager.h>
+#include <TPie.h>
+#include <TGeoMaterial.h>
+#include <TGeoMedium.h>
+#include <TGeoVolume.h>
+#include <TGeoBBox.h>
+#include <TGeoTube.h>
+#include <TGeoPcon.h>
+#include <TText.h>
+#include <TGeoHalfSpace.h>
+#include <TGeoMatrix.h>
+#include <TGeoCompositeShape.h>
+
+#include "ComponentAnsys123.hh"
+#include "ViewField.hh"
+#include "MediumMagboltz.hh"
+#include "Sensor.hh"
+#include "AvalancheMicroscopic.hh"
+#include "AvalancheMC.hh"
+#include "Random.hh"
+#include "Plotting.hh"
+#include "ViewFEMesh.hh"
+
+using namespace Garfield;
+
+int main(int argc, char * argv[]) {
+
+  TApplication app("app", &argc, argv);
+  plottingEngine.SetDefaultStyle();
+  
+  TH1F* totalelectrons = new TH1F("totalelectrons","",35,0,3500);
+  TH1F* lostelectrons =  new TH1F("lostelectrons","",35,0,3500);
+  TH1F* fractionup =  new TH1F("fractionup","",35,0,3500);
+  TH1F* fractionplastic  =  new TH1F("fractionplastic","",35,0,3500);
+  TH1F* fractionlow =  new TH1F("fractionlow","",35,0,3500);
+  
+
+  const bool debug = true;
+
+  // Dimensions of the GEM
+  const double pitch = 0.014;
+  const double kapton = 50.e-4;
+  const double metal = 5.e-4;
+  const double outdia = 70.e-4;
+  const double middia = 50.e-4;
+  // Voltages on GEM
+  const double drft =-200;
+  const double induction =700;
+  const double upmetal=-100;
+  const double lowmetal=200;
+  
+  double voltages=0.;
+  int lost;
+  int prod;
+  double hold;
+  double lower;
+  double upper;
+  std::stringstream ss;
+  const char* PATH = ".";
+  char buff[FILENAME_MAX];
+  char buff2[FILENAME_MAX];
+  getcwd(buff,sizeof(buff));
+  std::string a(buff);
+  std::string help;
+  std::string search = "/d-"; //stringa da <cercare 
+    DIR *dir = opendir(PATH);
+
+    struct dirent *entry = readdir(dir);
+
+    while (entry != NULL)
+      {
+	getcwd(buff,sizeof(buff));
+	a = buff;
+	a +="/";
+        if (entry->d_type == DT_DIR)	  
+	  { a += entry->d_name;
+	    if(a.find(search)!=std::string::npos)
+	      {
+		voltages=0;
+		sscanf(entry->d_name,"%s",buff2);
+		voltages += std::atoi(&buff2[2]);
+		if((int)voltages % 10 == 8) voltages -=0.5;
+		if((int)voltages % 10 == 2) voltages +=0.5;
+		voltages -= 175;
+		voltages = voltages / 0.025;
+
+		a += "/log.txt";		
+		std::ifstream f ( a );
+		a = "";
+		while(getline( f, a))
+		  {
+	    	    if(a.find("prodotti")!=std::string::npos)
+		      {
+			lost = 0;
+			prod=0;
+			ss<<a;
+			//std::cout<<"Sto leggendo:\t"<<ss.rdbuf()<<"\n";
+			ss.ignore(26,'\n');
+			ss>>prod;
+			totalelectrons->Fill(voltages,prod);
+			ss.ignore(25,'z');
+			ss>>lost;
+			lostelectrons->Fill(voltages,lost);
+			ss.str("");
+			ss.clear();
+			continue;
+			
+		      }
+
+		    
+		    if(a.find("upper metal:")!=std::string::npos)
+		      {
+			upper = 0.;
+			ss<<a;
+			ss.ignore(16,'z');
+			ss>>upper>>buff;
+			fractionup->Fill(voltages,upper*prod/100);
+			std::cout<<"Voltages: "<<voltages<<"Upper : "<<upper*prod/100<<"\n";
+			// std::cout << "A VGEM: "<<voltages<<" trovo lowmetal: "<< hold <<"\n";
+			if(voltages==600) std::cout<<voltages<<" upper:"<<upper<<" ";
+			ss.str("");
+			ss.clear();
+			continue;
+			
+		      }
+		    
+		    if(a.find("plastic:")!=std::string::npos)
+		      {
+			hold=0;
+			ss<<a;
+			ss.ignore(16,'z');
+			// std::cout<<voltages<<ss.rdbuf()<<"\n";
+			ss>>hold>>buff;
+			fractionplastic->Fill(voltages,(hold+upper)*prod/100);
+			if(voltages==600) std::cout<<" plastic:"<<hold<<" ";
+			// std::cout<<voltages<<" trovo plastic: "<< hold;
+			ss.str("");
+			ss.clear();
+			continue;
+			
+		      }
+		    if(a.find("lower")!=std::string::npos)
+		      {
+			lower = 0.;
+			ss<<a;
+			ss.ignore(16,'z');
+			// std::cout<<voltages<<ss.rdbuf()<<"\n";
+			ss>>lower>>buff;		  
+			lower += hold;
+			lower += upper;
+			if(voltages==600) std::cout<<voltages<<" upper:"<<lower<<"\n";
+			fractionlow->Fill(voltages,lower*prod/100);
+			ss.str("");
+			ss.clear();
+			continue;			
+		      }
+		    
+		  }
+	      }
+	  }
+	
+
+        entry = readdir(dir);
+    }
+    closedir(dir);
+    
+    lostelectrons->SetFillColor(21);
+    lostelectrons->SetBarWidth(1);
+    lostelectrons->SetBarOffset(0.);
+    lostelectrons->SetXTitle("");
+    lostelectrons->SetYTitle("");
+    lostelectrons->SetStats(kFALSE);
+    fractionlow->SetFillColor(30);
+    fractionlow->SetBarWidth(1);
+    fractionlow->SetBarOffset(0.);
+    fractionlow->SetXTitle("");
+    fractionlow->SetYTitle("");
+    fractionlow->SetStats(kFALSE);
+
+    fractionplastic->SetFillColor(46);
+    fractionplastic->SetBarWidth(1);
+    fractionplastic->SetBarOffset(0.);
+    fractionplastic->SetXTitle("");
+    fractionplastic->SetYTitle("");
+    fractionplastic->SetStats(kFALSE);    
+    
+
+    
+    fractionup->SetFillColor(1);
+    fractionup->SetBarWidth(1);
+    fractionup->SetBarOffset(0.);
+    fractionup->SetXTitle("");
+    fractionup->SetYTitle("");
+    fractionup->SetStats(kFALSE);    
+    
+    totalelectrons->SetFillColor(4);
+    totalelectrons->SetBarWidth(1);
+    //    totalelectrons->SetBarOffset(0.);
+    totalelectrons->SetXTitle("Drift field [V]");
+    totalelectrons->SetYTitle("Number of electrons");
+    totalelectrons->GetYaxis()->SetRange(0.,700.);
+    totalelectrons->SetStats(kFALSE);
+    TCanvas* c4 = new TCanvas("c4", "totalelectrons",1600,800);
+    totalelectrons->Draw("Hist");
+    //lostelectrons->Draw("SAME hist b");
+       fractionlow->Draw("SAME hist b");
+    fractionplastic->Draw("SAME hist b");
+       fractionup->Draw("SAME hist b");
+    
+    auto legend = new TLegend(0.4,0.7,0.68,0.9);
+    legend->SetHeader("Legend","C"); // option "C" allows to center the header
+    legend->AddEntry(totalelectrons,"Produced electrons","f");
+    legend->AddEntry(fractionlow,"Lost on lowmetal+plastic+upmetal","f");
+    legend->AddEntry(fractionup,"Lost on upper metal","f");
+    legend->AddEntry(fractionplastic,"Lost on plastic + upmetal","f");
+    
+    legend->SetFillColorAlpha(kWhite,0.5);
+    legend->Draw();
+    char c[200];
+    char b[200];
+    sprintf(c,"GEM dimension [#mum]   -   kapton = %.0f,  hole diam = %.0f-%.0f,  pitch = %.0f, dirft gap = 250",kapton*10000, middia*10000,outdia*10000,pitch*10000);
+    TLatex *text = new TLatex(50, 830, c);
+    sprintf(b,"#splitline{GEM field: %.0f kV/cm}{Transfer field: %.0f kV/cm}",(lowmetal-upmetal)/5,(induction-lowmetal)/100);   //Fattore 100 ingloba spazio di drift e conversione V->kV
+    TLatex *text2 = new TLatex(100, 700, b);
+    text->SetTextSize(0.032);
+    text2->SetTextSize(0.039);
+    text->Draw();
+    text2->Draw();
+    c4->Modified();
+    c4->Update();
+    
+
+    
+    app.Run(kTRUE);
+    
+}
+    
